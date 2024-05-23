@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "pd-client"
+  labels:
+    name: "pd-client"
+    app: "pdrace"
+
+spec:
+  selector:
+    matchLabels:
+      service: "pd-client"
+  replicas: 1
+  template:
+    metadata:
+      name: "pd-client"
+      labels:
+        service: "pd-client"
+
+    spec:
+      containers:
+        # next js client container
+        - name: pd-client
+          image: ccdaniele/pd-client-service:v1.0_linuxamd_dnsregis_port3002_axios
+          imagePullPolicy: Always
+          ports:
+            - name: client-port
+              containerPort: 3002
+          # resources:
+          #   limits:
+          #     cpu: "10Gi"
+          #     memory: "10Gi"
+          env:
+            - name: "DD_TAGS"
+              value: "language:javascript"
+
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: pd-client-svc
+spec:
+  type: "NodePort"
+  selector:
+    service: "pd-client"
+  ports:
+  - port: 3002
+    targetPort: client-port

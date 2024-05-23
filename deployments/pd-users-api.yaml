@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "pd-users-api"
+  labels:
+    name: "pd-users-api"
+    version: "aldrick_base_v1.0"
+spec:
+  selector:
+    matchLabels:
+      app: "pd-api-pod"
+      service: "pd-users-api"
+  replicas: 1
+  template:
+    metadata:
+      name: "pd-users-api"
+      labels:
+        app: "pd-api-pod"
+        service: "pd-users-api"
+    spec:
+      containers:
+        - name: pd-users-api
+          image: ccdaniele/pdrace-users-api:v1.0_postgres_linuxamd_ddon_port3000_hostallowapi 
+          imagePullPolicy: Always
+          ports:
+            - name: users-api-port
+              containerPort: 3000
+          volumeMounts:
+            - mountPath: /back
+              name: back-volume
+      volumes:
+      - name: back-volume
+        emptyDir:
+          sizeLimit: 100000Mi
+        
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: pd-api-svc
+spec:
+  selector:
+    app: "pd-api-pod"
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: users-api-port

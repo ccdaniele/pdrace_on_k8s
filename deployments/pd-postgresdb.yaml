@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "pd-postgresdb"
+  labels:
+    name: "pd-postgresdb"
+    version: "v1"
+spec:
+  selector:
+    matchLabels:
+      service: "pd-postgresdb"
+  replicas: 1
+  template:
+    metadata:
+      name: "pd-postgresdb"
+      labels:
+        service: "pd-postgresdb"
+    spec:
+      containers:
+        - name: pd-db-postgres
+          image: postgres
+          imagePullPolicy: Always
+          ports:
+            - name: db-port
+              containerPort: 5432
+          # resources:
+          #   limits:
+          #     cpu: "100000m"
+          #     memory: "10Gi"
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/
+              name: pd-users-storage
+              subPath: data
+          env: 
+            - name: "PGDATA"
+              value: "/var/lib/postgresql/data"
+            - name: "POSTGRES_USER"
+              value: "pdrace"
+            - name: "POSTGRES_PASSWORD"
+              value: "password"
+            - name: "POSTGRES_DB"
+              value: "pdrace"            
+      volumes:
+      - name: pd-users-storage
+        persistentVolumeClaim:
+          claimName: pd-users-claim
+        
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: pd-db-svc
+spec:
+  selector:
+    service: "pd-postgresdb"
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: db-port
